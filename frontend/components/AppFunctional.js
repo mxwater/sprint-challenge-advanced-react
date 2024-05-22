@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import axios from 'axios'
 
 // Suggested initial states
 const initialMessage = ''
@@ -40,7 +41,6 @@ export default function AppFunctional(props) {
     return {x:x, y:y}
   
   }
-  // console.log(getXY())
 
   function getXYMessage() {
     // It it not necessary to have a state to track the "Coordinates (2, 2)" message for the user.
@@ -130,33 +130,32 @@ export default function AppFunctional(props) {
   
 
   function onChange(evt) {
-    // You will need this to update the value of the input.
+  
     setEmail(evt.target.value)
   }
 
-  function onSubmit(evt) {
-    evt.preventDefault()
-    const username = email.split('@')[0]
-    const randomNumber = Math.floor(Math.random() * 100)
-    const newMessage = (`${username} win #${randomNumber}`)
-    setMessage(newMessage)
-
-    // Use a POST request to send a payload to the server.
-
-    const payload = {
-      email: email,
-      message: newMessage,
-    };
+  async function onSubmit(evt) {
+    evt.preventDefault();
+    const coords = getXY();
+    const payload = { x: coords.x, y: coords.y, steps, email };
+  
+    try {
+      const response = await axios.post('http://localhost:9000/api/result', payload);
+      setMessage(response.data.message || 'Submission successful');
+      setEmail(initialEmail)
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || 'An unexpected error occurred';
+      setMessage(errorMsg);
+    }
+  }
   
 
-
-  }
 
   return (
     <div id="wrapper" className={props.className}>
       <div className="info">
         <h3 id="coordinates">{getXYMessage()}</h3>
-        <h3 id="steps">You moved {steps} times</h3>
+        <h3 id="steps">You moved {steps} time{steps === 1 ? '' : 's'}</h3>
       </div>
       <div id="grid">
         {
@@ -179,7 +178,7 @@ export default function AppFunctional(props) {
       </div>
       <form onSubmit={onSubmit}>
         <input onChange={onChange} value={email} id="email" type="email" placeholder="type email"></input>
-        <input id="submit" type="submit"></input>
+        <input value={'Submit'} id="submit" type="submit"></input>
       </form>
     </div>
   )
